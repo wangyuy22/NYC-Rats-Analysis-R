@@ -1,5 +1,5 @@
 ---
-title: "Rats - OIDD245 by Yuyang Wang"
+title: "NYC Rats Analysis by Yuyang Wang"
 output: html_notebook
 ---
 
@@ -87,15 +87,10 @@ print(stat_plot + ggtitle("Rat Sighting in Staten Island over 5 Years") + labs(y
 
 ```
 
-Part 1b)
-
 Based on the 5 graphs across the 5 different Boroughs, it appears that rat sightings have generally stayed the same, though they spike/dip in certains months.
-
-Part 1c)
 
 Yes there does appear to be seasonal rat sightings. From the 5 graphs, it appears that rat sightings tend to be higher during the Spring time, from March to May. On the other hand, the rat sightings tend to be lower during the Winter time, from October/November to February.
 
-Part 1d)
 
 ```{r}
 #Number to indicate if there are rat signs
@@ -114,8 +109,6 @@ library(ggplot2)
 ggplot(efficiency, aes(x = ym, y = eff, group = BOROUGH, color = BOROUGH)) + geom_line() + geom_point() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(vjust = 1, size = 5, angle = 90)) + ggtitle("Efficiency of rat inspections") +  labs(y="Efficiency", x = "Month and Year")
 ```
 
-Part 1e)
-
 The top 10 zip codes of rat sightings are (in descending order):
 10457, 10458, 10456, 10468, 11221, 10453, 10452, 11237, 10467, 11206	
 
@@ -132,14 +125,12 @@ Top_zips = Top_zips[order(Top_zips$rat_sightings,decreasing = TRUE),][1:10,]
 Top_zips
 ```
 
-Part 2
+Looking at data from the weeks before and after Hurricane Sandy.
 
 ```{r}
 #Import data
 sandy_calls = read.csv("/Users/yuyangwang 1/Desktop/OIDD 245/Rats/sandyrelated.csv")
 ```
-
-Part 2a)
 
 It is difficult to say given the limited amount of data for the days preceding Hurrican Sandy. However, during Sandy, sighting were very low but after, there is a general increase in rat sightings. 
 
@@ -163,8 +154,6 @@ group_by(dates) %>%
 before_after_plot = ggplot(rodent_obs, aes(dates, Freq)) + geom_line()
 print(before_after_plot + ggtitle("Rat Complaints Before/After Hurricane Sandy Ocuurence") + labs(y="Number of Sighting", x = "Time"))
 ```
-
-Part 2b)
 
 The two other complaints most correlated with rodent sightings are NONCOST and PLUMBING.
 
@@ -200,8 +189,6 @@ colnames(rodent_correlation) = c("correlation", "complaints")
 rodent_correlation = rodent_correlation[order(rodent_correlation$correlation,decreasing = TRUE),]
 rodent_correlation
 ```
-
-Part 3)
 
 The relationship is statitistically significant because the p value is < 0.05 and that based on the Signif codes denoted by the number of '*'s, there is a high significance.
 
@@ -242,8 +229,6 @@ answer$inspect_dm = as.factor(answer$inspect_dm)
 #Step 4 Run a logistic regression on the new data set to test whether the estimated coefficient on the restaurant sightings variable has a statistically significant relationship with whether or not an inspection yields Active Rat Signs and–if it is significant–whether the relationship is positive or negative. 
 summary(glm(data = answer, Active_Rats ~ Resto_Rats + inspect_dm + inspect_dy, family=binomial))
 ```
-
-Part 4
 
 One question that I may still want to answer regarding rodents is that are locations closer to garbage locations more prone to rodent sightings?
 
