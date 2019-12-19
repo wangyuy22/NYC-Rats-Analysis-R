@@ -1,0 +1,256 @@
+---
+title: "Rats - OIDD245 by Yuyang Wang"
+output: html_notebook
+---
+
+```{r}
+install.packages("TeachingDemos")
+install.packages("readr")
+
+library("TeachingDemos")
+library("dplyr")
+library("readr")
+
+rod.inspection = read_csv("/Users/yuyangwang 1/Desktop/OIDD 245/Rats/Rodent_Inspection.csv")
+
+# In the line below, change "Jack Black" to your own name
+myname = "Yuyang Wang"
+
+# Then run the following lines
+set.seed(char2seed(myname))
+rod.inspection = sample_frac(rod.inspection, .8)
+rod.inspection = rod.inspection[, sample(1:ncol(rod.inspection))] 
+```
+
+```{r}
+library(magrittr)
+install.packages("tidyverse")
+library(tidyverse)
+install.packages("lubridate")
+library(lubridate)
+install.packages("ggplot2") 
+library(ggplot2)
+install.packages("magrittr")
+library(magrittr)
+install.packages("dplyr")
+library(dplyr)
+
+```
+
+Part 1a)
+
+```{r}
+#Converting the given date to separate values for date, month, and year
+findMonths = as.data.frame(select(rod.inspection, INSPECTION_DATE, BOROUGH, RESULT, ZIP_CODE))
+findMonths$dates = sub(" .*", "", findMonths$INSPECTION_DATE)
+findMonths$dates = mdy(findMonths$dates)
+findMonths$month_year = paste(month(findMonths$dates), year(findMonths$dates), 1, sep = "/")
+findMonths$month = month(findMonths$dates)
+findMonths$year = year(findMonths$dates)
+
+#For Bronx
+bronx_df = filter(findMonths, BOROUGH == "Bronx" & RESULT == "Active Rat Signs", year >= 2012)
+bronx = as.data.frame(table(bronx_df$month_year))
+bronx$my = as.Date(bronx$Var1, "%m/%Y/%d")
+bronx_plot = ggplot(bronx, aes(my, Freq)) + geom_line() + geom_point() + ylim(0, 900)
+print(bronx_plot + ggtitle("Rat Sighting in Bronx over 5 Years") + labs(y="Number of Sighting", x = "Year")) 
+
+#For Manhattan
+man_df = filter(findMonths, BOROUGH == "Manhattan" & RESULT == "Active Rat Signs", year >= 2012)
+man_df = as.data.frame(table(man_df$month_year))
+man_df$my = as.Date(man_df$Var1, "%m/%Y/%d")
+man_plot = ggplot(man_df, aes(my, Freq)) + geom_line() + geom_point() + ylim(0, 900)
+print(man_plot + ggtitle("Rat Sighting in Manhattan over 5 Years") + labs(y="Number of Sighting", x = "Year"))
+
+#For Brooklyn
+brook_df = filter(findMonths, BOROUGH == "Brooklyn" & RESULT == "Active Rat Signs", year >= 2012)
+brook_df = as.data.frame(table(brook_df$month_year))
+brook_df$my = as.Date(brook_df$Var1, "%m/%Y/%d")
+brook_plot = ggplot(brook_df, aes(my, Freq)) + geom_line() + geom_point() + ylim(0, 900)
+print(brook_plot + ggtitle("Rat Sighting in Brooklyn over 5 Years") + labs(y="Number of Sighting", x = "Year"))
+
+
+#For Queens
+queens_df = filter(findMonths, BOROUGH == "Queens" & RESULT == "Active Rat Signs", year >= 2012)
+queens_df = as.data.frame(table(queens_df$month_year))
+queens_df$my = as.Date(queens_df$Var1, "%m/%Y/%d")
+queens_plot = ggplot(queens_df, aes(my, Freq)) + geom_line() + geom_point() + ylim(0, 200)
+print(queens_plot + ggtitle("Rat Sighting in Queens over 5 Years") + labs(y="Number of Sighting", x = "Year"))
+
+
+#For Staten Island
+stat_df = filter(findMonths, BOROUGH == "Staten Island" & RESULT == "Active Rat Signs", year >= 2012)
+stat_df = as.data.frame(table(stat_df$month_year))
+stat_df$my = as.Date(stat_df$Var1, "%m/%Y/%d")
+stat_plot = ggplot(stat_df, aes(my, Freq)) + geom_line() + geom_point() + ylim(0, 100)
+print(stat_plot + ggtitle("Rat Sighting in Staten Island over 5 Years") + labs(y="Number of Sighting", x = "Year"))
+
+```
+
+Part 1b)
+
+Based on the 5 graphs across the 5 different Boroughs, it appears that rat sightings have generally stayed the same, though they spike/dip in certains months.
+
+Part 1c)
+
+Yes there does appear to be seasonal rat sightings. From the 5 graphs, it appears that rat sightings tend to be higher during the Spring time, from March to May. On the other hand, the rat sightings tend to be lower during the Winter time, from October/November to February.
+
+Part 1d)
+
+```{r}
+#Number to indicate if there are rat signs
+findMonths$rat_count = ifelse(findMonths$RESULT == "Active Rat Signs",1,0)
+
+#Check efficiency by summing rat signs over total 
+efficiency = findMonths %>%
+  group_by(month, year, BOROUGH) %>%
+  summarize(eff = (sum(rat_count == "1") / n()))
+
+efficiency$ym = paste(as.character(efficiency$year), "." ,as.character(efficiency$month),sep = "")
+efficiency = filter(efficiency, ym >= 2012.03)
+
+#Plot the graph 
+library(ggplot2)
+ggplot(efficiency, aes(x = ym, y = eff, group = BOROUGH, color = BOROUGH)) + geom_line() + geom_point() + theme(plot.title = element_text(hjust = 0.5), axis.text.x = element_text(vjust = 1, size = 5, angle = 90)) + ggtitle("Efficiency of rat inspections") +  labs(y="Efficiency", x = "Month and Year")
+```
+
+Part 1e)
+
+The top 10 zip codes of rat sightings are (in descending order):
+10457, 10458, 10456, 10468, 11221, 10453, 10452, 11237, 10467, 11206	
+
+```{r}
+#Find the top zip codes with rat sightings
+findMonths$rat_count = ifelse(findMonths$RESULT == "Active Rat Signs",1,0)
+Top_zips = findMonths %>% 
+  
+#Group by zipcode and check the number of rat counts
+group_by(ZIP_CODE) %>%
+  filter(year >= 2012 & RESULT == "Active Rat Signs") %>% 
+  summarize(rat_sightings = (sum(rat_count == "1")))
+Top_zips = Top_zips[order(Top_zips$rat_sightings,decreasing = TRUE),][1:10,]
+Top_zips
+```
+
+Part 2
+
+```{r}
+#Import data
+sandy_calls = read.csv("/Users/yuyangwang 1/Desktop/OIDD 245/Rats/sandyrelated.csv")
+```
+
+Part 2a)
+
+It is difficult to say given the limited amount of data for the days preceding Hurrican Sandy. However, during Sandy, sighting were very low but after, there is a general increase in rat sightings. 
+
+```{r}
+#Create data frame with complaint type and dates + modify the dates as above
+sandyRodentChange = as.data.frame(select(sandy_calls, Created.Date, Complaint.Type))
+sandyRodentChange$dates = sub(" .*", "", sandyRodentChange$Created.Date)
+sandyRodentChange$dates = mdy(sandyRodentChange$dates)
+sandyRodentChange$month_year = paste(month(sandyRodentChange$dates), year(sandyRodentChange$dates), 1, sep = "/")
+sandyRodentChange$month = month(sandyRodentChange$dates)
+sandyRodentChange$year = year(sandyRodentChange$dates)
+sandyRodentChange$dates = as.Date(sandyRodentChange$dates)
+
+#Choose dates of the 1 week periods before and after Sandy
+rodent_obs = sandyRodentChange[sandyRodentChange$dates >= as.Date("2012-10-22") & sandyRodentChange$dates <= as.Date("2012-11-05"),]
+rodent_obs = rodent_obs %>% 
+group_by(dates) %>%
+  summarize(Freq = (sum(Complaint.Type == "Rodent")))
+
+#Show before and after plot
+before_after_plot = ggplot(rodent_obs, aes(dates, Freq)) + geom_line()
+print(before_after_plot + ggtitle("Rat Complaints Before/After Hurricane Sandy Ocuurence") + labs(y="Number of Sighting", x = "Time"))
+```
+
+Part 2b)
+
+The two other complaints most correlated with rodent sightings are NONCOST and PLUMBING.
+
+```{r}
+#Find top15 complaints + rodent 
+tally = tally(group_by(sandy_calls, Complaint.Type))
+tally1 = tally[order(tally$n, decreasing = TRUE),]
+tally2 = head(tally1, 15)
+tally2 = rbind(tally2, c("Rodent", " "))
+
+#Create another table that is grouped by incident zip and complaint types
+comp_zip = sandy_calls %>% 
+  group_by(Incident.Zip, Complaint.Type) %>% 
+  summarize(complaint_number= n()) 
+
+#Filter down to the top 15 complaints + Rodent
+comp_zip = filter(comp_zip, Complaint.Type %in% tally2$Complaint.Type)
+
+#Transpose this dataframe
+library(reshape2)
+trans_df = dcast(comp_zip, Incident.Zip ~ Complaint.Type, value.var="complaint_number")
+
+#Change all the null values to 0 
+trans_df[is.na(trans_df)] = 0
+
+#Create a correlation dataframe
+correlation = as.data.frame(cor(trans_df[2:16]))
+
+#Delete all other columns except the column with Rodents. Create new names for the rows and columns
+rodent_correlation = correlation["Rodent"]
+rodent_correlation$Complaint.Type = rownames(rodent_correlation)
+colnames(rodent_correlation) = c("correlation", "complaints")
+rodent_correlation = rodent_correlation[order(rodent_correlation$correlation,decreasing = TRUE),]
+rodent_correlation
+```
+
+Part 3)
+
+The relationship is statitistically significant because the p value is < 0.05 and that based on the Signif codes denoted by the number of '*'s, there is a high significance.
+
+```{r}
+Resto = read.csv("/Users/yuyangwang 1/Desktop/OIDD 245/Rats/DOHMH_New_York_City_Restaurant_Inspection_Results.csv")
+
+#From the date column, create separate columns of month and year 
+Resto$INSPECTION.DATE = as.character(Resto$INSPECTION.DATE)
+Resto$date.month = sapply(strsplit(Resto$INSPECTION.DATE,"/"),"[",1)
+Resto$date.year = sapply(strsplit(Resto$INSPECTION.DATE,"/"),"[",3)
+
+#Check if there are rat violations
+Resto$Rest_Rat = ifelse(Resto$VIOLATION.CODE == "04L"| Resto$VIOLATION.CODE == "04K" | Resto$VIOLATION.CODE == "08A", 1, 0)
+
+RestaurantRatViolations = Resto %>% 
+group_by(ZIPCODE, date.month, date.year)%>%
+  summarize(Resto_Rats = sum(Rest_Rat))
+
+#Merging Restaurant Inspection with Rodent Inspection Data with a left join 
+rod.inspection$INSPECTION_DATE = as.character(rod.inspection$INSPECTION_DATE)
+rod.inspection$inspect_d = sapply(strsplit(rod.inspection$INSPECTION_DATE," "),"[",1)
+rod.inspection$inspect_dm =sapply(strsplit(rod.inspection$inspect_d,"/"),"[",1)
+rod.inspection$inspect_dy =sapply(strsplit(rod.inspection$inspect_d,"/"),"[",3)
+merged_df = merge(rod.inspection, RestaurantRatViolations, by.x = c("inspect_dy","inspect_dm", "ZIP_CODE"), by.y = c("date.year","date.month","ZIPCODE"), all.x =  TRUE)
+
+#Convert any missing restaurant violation numbers to 0. Add 1 and Log this measure
+merged_df$Resto_Rats[is.na(merged_df$Resto_Rats)] = 0
+merged_df$Resto_Rats = log(merged_df$Resto_Rats+1)
+
+#Again check if there are Active Rat Signs
+merged_df$Active_Rats = as.integer(merged_df$RESULT == "Active Rat Signs")
+answer = filter(merged_df, inspect_dy >= 2012)
+
+#Convert month and year into factor variables 
+answer$inspect_dy = as.factor(answer$inspect_dy)
+answer$inspect_dm = as.factor(answer$inspect_dm)
+
+#Step 4 Run a logistic regression on the new data set to test whether the estimated coefficient on the restaurant sightings variable has a statistically significant relationship with whether or not an inspection yields Active Rat Signs and–if it is significant–whether the relationship is positive or negative. 
+summary(glm(data = answer, Active_Rats ~ Resto_Rats + inspect_dm + inspect_dy, family=binomial))
+```
+
+Part 4
+
+One question that I may still want to answer regarding rodents is that are locations closer to garbage locations more prone to rodent sightings?
+
+A specific data set that can be used to answer this question is a data set provided Open Data NYC, which lists the Food Scrap drop-off locations in New York City. It contains information on the location (longitude, latitude, zip code, borough) as well as the days of the week that those drop-off spots are open. This can be joined with the current data based on either zip code, borough, or coordinates.
+
+https://data.cityofnewyork.us/Environment/Food-Scrap-Drop-Off-Locations-in-NYC/if26-z6xq
+
+Finally, the analysis we could conduct is using geo spatial data and mapping this drop-off locations on a map. Then, using the current rodent sighting data, we can create visuals (such as heat maps) to see if these locations do have the highest densities of sightings. Moreover, we can see how these sightings differ among days of the week depending on which days they are open.
+
+
